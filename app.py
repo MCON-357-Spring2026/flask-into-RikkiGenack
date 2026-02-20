@@ -2,6 +2,11 @@ from flask import Flask, request, current_app, jsonify
 
 app = Flask(__name__)
 
+@app.before_request
+def before_request():
+    #add code to log
+
+
 @app.route("/", methods=["GET"])
 def welcome_endpoint():
     return "<h1>Welcome to My Flask API!</h1>"
@@ -20,16 +25,18 @@ def greet_endpoint(name):
 
 
 @app.route("/calculate", methods=["GET"])
-def calculate_endpoint(num1, num2, operation):
-    if request.args.get('operation') == "add":
-        result = num1 + num2
-    if request.args.get('operation') == "subtract":
-        result = num1 - num2
-    if request.args.get('operation') == "multiply":
-        result = num1 * num2
-    elif request.args.get('operation') == "divide":
-        result = num1 / num2
-    return jsonify({"result": result}, {"operation": operation})
+def calculate_endpoint():
+    #num1, num2, operation
+    operation = request.args.get("operation")
+    if operation == "add":
+        result = int(request.args.get("num1")) + int(request.args.get("num2"))
+    elif operation == "subtract":
+        result = int(request.args.get("num1")) - int(request.args.get("num2"))
+    elif operation == "multiply":
+        result = int(request.args.get("num1")) * int(request.args.get("num2"))
+    elif operation == "divide":
+        result = int(request.args.get("num1")) / int(request.args.get("num2"))
+    return jsonify({"result": result, "operation": operation})
 
 @app.route("/echo", methods=["POST"])
 def echo_endpoint():
