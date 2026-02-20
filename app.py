@@ -4,7 +4,18 @@ app = Flask(__name__)
 
 @app.before_request
 def before_request():
-    #add code to log
+    print(request.method, request.path)
+
+
+@app.after_request
+def after_request(response):
+    response.headers["X-Custom-Header"] = "FlaskRocks"
+    return response
+
+@app.teardown_request
+def teardown_request(exception):
+    if exception:
+        print(exception)
 
 
 @app.route("/", methods=["GET"])
@@ -24,24 +35,33 @@ def greet_endpoint(name):
 
 
 
-@app.route("/calculate", methods=["GET"])
-def calculate_endpoint():
-    #num1, num2, operation
-    operation = request.args.get("operation")
-    if operation == "add":
-        result = int(request.args.get("num1")) + int(request.args.get("num2"))
-    elif operation == "subtract":
-        result = int(request.args.get("num1")) - int(request.args.get("num2"))
-    elif operation == "multiply":
-        result = int(request.args.get("num1")) * int(request.args.get("num2"))
-    elif operation == "divide":
-        result = int(request.args.get("num1")) / int(request.args.get("num2"))
-    return jsonify({"result": result, "operation": operation})
+@app.route('/calculate')
+def calculate():
+    num1 = float(request.args.get('num1', 0))
+    num2 = float(request.args.get('num2', 0))
+    operation = request.args.get('operation')
+    try:
+        if operation == 'add':
+            result = num1 + num2
+        elif operation == 'subtract':
+            result = num1 - num2
+        elif operation == 'multiply':
+            result = num1 * num2
+        elif operation == 'divide':
+            result = num1 / num2
+        else:
+            return jsonify({"error": "Invalid operation"}), 400
+        return jsonify({"result": result, "operation": operation})
+    except Exception as e:
+        # Log the exception and return an error response
+        print(f"Error occurred: {e}")
+        return jsonify({"error": "An error occurred during calculation"}), 500
 
 @app.route("/echo", methods=["POST"])
 def echo_endpoint():
-    print(request.get_json())
-    return f'{request.get_json()} echoed": true'
+    data = request.get_json()
+    print(data)
+    return {"echoed": True, "data" : data}
 
 @app.route("/status/<int:code>", methods=["GET"])
 def status_endpoint(code):
@@ -49,7 +69,16 @@ def status_endpoint(code):
 
 
 
-
+@app.route('/debug/routes')
+def show_routes():
+    routes = []
+    for rule in app.url_map.iter_rules():
+        routes.append({
+            'endpoint': rule.endpoint,
+            'methods': list(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify(routes)
 
 
 
